@@ -1,5 +1,6 @@
 import pandas as pd
 import sqlite3
+import os
 
 # Create a database
 # If I had access to snowflake, I'd import the python module and connect to the db using the auth code
@@ -28,18 +29,25 @@ crime_csv = pd.read_csv('crime.csv')
 
 # If column name conventions differ from csv to db, provide mapping to correct formatting issues
 col_mapping = {
-    'Falls within':'police_area',
-    'Month':'month',
-    'Longitude':'lng',
-    'Latitude':'lat',
-    'Location':'street',
-    'Crime type':'crime_type'
+    'Falls within': 'police_area',
+    'Month': 'month',
+    'Longitude': 'lng',
+    'Latitude': 'lat',
+    'Location': 'street',
+    'Crime type': 'crime_type'
 }
 
-def find_file_paths():
+
+def find_file_paths(dir):
+    csv_paths = []
+    for file in os.listdir(dir):
+        if file.endswith(".csv"):
+            csv_paths.append(dir+file)
+    return csv_paths
     # Walk the directory and find all files with .csv in name
 
-def csv_to_db(csv_paths, table_name,connection, col_mapping):
+
+def csv_to_db(csv_paths, table_name, connection, col_mapping):
     """
     Write the contents of a given CSV file to a database
     :param csv_paths: Target paths to folder with CSV files to be uploaded
@@ -66,8 +74,6 @@ def csv_to_db(csv_paths, table_name,connection, col_mapping):
     connection.commit()  # Commit all changes
     connection.close()  # Close the connection
 
-
 # Read in downloaded crime statistics as a Pandas dataframe
 
 # Write data to the database
-
