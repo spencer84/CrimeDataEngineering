@@ -2,10 +2,10 @@ import pandas as pd
 import sqlite3
 import os
 
-# Create a database
 # If I had access to snowflake, I'd import the python module and connect to the db using the auth code
 
-#
+# Create a database
+
 conn = sqlite3.connect("crime.db")
 
 # Connect to DB
@@ -14,18 +14,17 @@ cur = conn.cursor()
 
 # Create a table for the CSV Data
 
-create_data_table = """CREATE TABLE IF NOT EXISTS crime 
+create_data_table = """CREATE TABLE crime 
 (police_area text, month date, lng real, lat real, street text, crime_type text);"""
 
 cur.execute(create_data_table)
 
 # Create a secondary table to log when the primary table is updated
 
-create_log_table = """CREATE TABLE IF NOT EXISTS crime_logs (police_area text, month date, update_date date, errors bool);"""
+create_log_table = """CREATE TABLE crime_logs 
+(police_area text, month date, update_date date, errors bool);"""
 
 cur.execute(create_log_table)
-
-crime_csv = pd.read_csv('crime.csv')
 
 # If column name conventions differ from csv to db, provide mapping to correct formatting issues
 col_mapping = {
@@ -61,19 +60,24 @@ def csv_to_db(csv_paths, table_name, connection, col_mapping):
     col_names = []
     for i in cur.description:
         col_names.append(i[0])  # Name of columns is first position for each description object, append to list
+    col_names_joined = ', '.join(col_names)
     for file in csv_paths:  # Iterate through the csv files in the list
         df = pd.read_csv(file)  # Read as Pandas DataFrame
         # Rename columns to match the database
         df.rename(columns=col_mapping, inplace=True)
+        df = df[df['street']!='No Location'] # Remove instances where no location found
         df = df[col_names]  # Return only the column names from the table and in the same order
         # Construct a query to insert data using the column names and values
-        col_names = ', '.join(col_names)
         for i in df.values:  # Iterate through each row of values
-            insert_query = "insert into " + table_name + " (" + col_names + ") VALUES " + str(tuple(i))
+            insert_query = "insert into " + table_name + " (" + col_names_joined + ") VALUES " + str(tuple(i))
             cur.execute(insert_query)
     connection.commit()  # Commit all changes
     connection.close()  # Close the connection
 
-# Read in downloaded crime statistics as a Pandas dataframe
+# Change the directory to target directory as needed
+# Default set to current working directory
+dir = os.curdir
 
-# Write data to the database
+csvs = find_file_paths(dir)
+
+csv_to_db(csvs,'crime',conn,col_mapping)
