@@ -1,6 +1,4 @@
 import requests
-import json
-import numpy as np
 import sqlite3
 import datetime
 
@@ -39,7 +37,7 @@ def json_to_df(json_data, cur, area,month):
             street.replace('On or near ','')
         vals = str(tuple((area,month,lng, lat, street, type)))
         query = "Insert into crime (police_area, month, lng, lat, street, crime_type) VALUES "+ vals
-
+        cur.execute(query)
 
 url = 'https://data.police.uk/api/crimes-street/all-crime'
 
